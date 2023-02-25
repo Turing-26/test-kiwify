@@ -6,7 +6,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.post("/api/submit", (req, res) => {});
+app.post("/api/submit", db.giveQuiz);
 
 app.get("/api/users/:id", db.getUserById);
 

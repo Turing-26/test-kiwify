@@ -1,10 +1,10 @@
 const Pool = require("pg").Pool;
 
 const pool = new Pool({
-  user: "turing",
+  user: "username",
   host: "localhost",
   database: "api",
-  password: "gotham",
+  password: "password",
   port: 5432,
 });
 
@@ -29,7 +29,39 @@ const getUserById = async (request, response) => {
   }
 };
 
+const giveQuiz = async (req, res) => {
+  const data = req.body;
+  const results = new Map();
+  const dbQuery = await pool.query(`select * from questions where q_id = '${data.q_id}'`);
+  console.log("--------------------------------------------------------------------------")
+  if (!dbQuery.rows.length) throw new Error("Quiz not found");
+  dbQuery.rows.forEach(question => {
+    results.set(question.question_id, question.answer);
+  })
+  if (data.answers.length !== results.size) throw new Error("Insufficient Answers");
+
+  console.log("--------------------------------------------------------------------------")
+  let score = 0;
+  for (let i = 0; i < data.answers.length; i++) {
+    let res = results.get(data.answers[i].id)
+    if (res === data.answers[i].answer) score++;
+  }
+  res.send({
+    "success": true,
+    "errors": null,
+    "data": {
+      "User score": score
+    }
+  })
+}
+
+
+
+
+
+
 module.exports = {
   getUsers,
   getUserById,
+  giveQuiz,
 };
