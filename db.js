@@ -75,7 +75,13 @@ const editQuiz = async (request, response) => {
 
     response.status(200).send({ success: true, error: null, data: null });
   } catch (error) {
-    console.log(error);
+    response
+      .status(404)
+      .send({
+        success: false,
+        errors: { code: error?.code, error: error },
+        data: null,
+      });
   }
 };
 
