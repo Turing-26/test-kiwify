@@ -15,6 +15,7 @@ const createQuiz = async (request, response) => {
     const questions = request.body.questions;
 
     // Here I used a dummy user_id because in the running application, the user id would be retrieved from the JWT token and not sent with the request, and since i did not work on the sign up logic for the test, i have just used a dummy user, also made in the sequel file for demonstration
+    // replace user ID with a user ID in your own instance
     const quiz = await pool.query(
       `insert into quiz (u_id, title, description) values ('IUj7sDzCW7', '${title}', '${description}') returning q_id;`
     );
@@ -48,14 +49,14 @@ const editQuiz = async (request, response) => {
 
     if (!id) {
       const quiz = await pool.query(
-        `insert into quiz (u_id, title, description) values ('IUj7sDzCW7', '${title}', '${description}') returning q_id;`
+        `insert into drafts (u_id, title, description) values ('IUj7sDzCW7', '${title}', '${description}') returning q_id;`
       );
       const quizId = quiz.rows[0].q_id;
 
       questions.forEach(async (mcq) => {
         const { question, options, answer } = mcq;
         const optionValues = options.map((option) => `"${option}"`).join(", ");
-        const insertMcqQuery = `insert into questions (question, options, answer, q_id) values ($1, '{${optionValues}}', $2, $3);`;
+        const insertMcqQuery = `insert into draft_questions (question, options, answer, q_id) values ($1, '{${optionValues}}', $2, $3);`;
         await pool.query(insertMcqQuery, [question, answer, quizId]);
       });
       response.status(200).send({ success: true, errors: null, data: null });
@@ -63,25 +64,23 @@ const editQuiz = async (request, response) => {
     }
 
     await pool.query(
-      `update quiz set title = '${title}', description = '${description}' where q_id = '${id}';`
+      `update drafts set title = '${title}', description = '${description}' where q_id = '${id}';`
     );
-    await pool.query(`delete from questions where q_id = '${id}';`);
+    await pool.query(`delete from draft_questions where q_id = '${id}';`);
     questions.forEach(async (mcq) => {
       const { question, options, answer } = mcq;
       const optionValues = options.map((option) => `"${option}"`).join(", ");
-      const insertMcqQuery = `insert into questions (question, options, answer, q_id) values ($1, '{${optionValues}}', $2, $3);`;
+      const insertMcqQuery = `insert into draft_questions (question, options, answer, q_id) values ($1, '{${optionValues}}', $2, $3);`;
       await pool.query(insertMcqQuery, [question, answer, id]);
     });
 
     response.status(200).send({ success: true, error: null, data: null });
   } catch (error) {
-    response
-      .status(404)
-      .send({
-        success: false,
-        errors: { code: error?.code, error: error },
-        data: null,
-      });
+    response.status(404).send({
+      success: false,
+      errors: { code: error?.code, error: error },
+      data: null,
+    });
   }
 };
 
